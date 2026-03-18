@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Bloc-notes collaboratif</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #f4f6f8;
+  padding: 20px;
+  max-width: 600px;
+  margin: auto;
+}
+
+h1 {
+  text-align: center;
+}
+
+form {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+button {
+  padding: 10px;
+  border: none;
+  background: #4CAF50;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #45a049;
+}
+
+.note {
+  background: white;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+}
+
+.delete {
+  background: red;
+  margin-top: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>📝 Bloc-notes collaboratif</h1>
+
+<form id="form" onsubmit="event.preventDefault(); ajouterNote();">
+  <input id="nom" placeholder="Nom" required>
+  <input id="message" placeholder="Message" required>
+  <button type="submit">Ajouter</button>
+</form>
+
+<div id="liste"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
+// CONFIG FIREBASE
+const firebaseConfig = {
+  apiKey: "AIzaSyCso2nJuui1ePEFRHTU1JyPyrGkHs52q70",
+  authDomain: "test-dev-alex.firebaseapp.com",
+  databaseURL: "https://test-dev-alex-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "test-dev-alex",
+  storageBucket: "test-dev-alex.firebasestorage.app",
+  messagingSenderId: "694445987283",
+  appId: "1:694445987283:web:c01fc42eaf0b8e76868b26"
+};
+
+// INIT FIREBASE
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const notesRef = ref(db, "notes");
+
+// AJOUTER NOTE
+window.ajouterNote = function() {
+  const nom = document.getElementById("nom").value;
+  const message = document.getElementById("message").value;
+
+  push(notesRef, {
+    nom: nom,
+    message: message,
+    date: new Date().toLocaleString()
+  });
+
+  document.getElementById("form").reset();
+};
+
+// AFFICHAGE TEMPS RÉEL
+onValue(notesRef, (snapshot) => {
+  const data = snapshot.val();
+  const liste = document.getElementById("liste");
+
+  liste.innerHTML = "";
+
+  for (let id in data) {
+    const note = data[id];
+
+    const div = document.createElement("div");
+    div.className = "note";
+
+    div.innerHTML = `
+      <strong>${note.nom}</strong><br>
+      ${note.message}<br>
+      <small>${note.date}</small><br>
+      <button class="delete" onclick="supprimerNote('${id}')">Supprimer</button>
+    `;
+
+    liste.appendChild(div);
+  }
+});
+
+// SUPPRIMER NOTE
+window.supprimerNote = function(id) {
+  remove(ref(db, "notes/" + id));
+};
+</script>
+
+</body>
+</html>
